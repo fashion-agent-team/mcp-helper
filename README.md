@@ -1,31 +1,57 @@
 # mcp-helper
 
-**helper MCP 서버** · 패션 에이전트(시각장애인용 코디 도우미)의 한 부분입니다.
+**helper MCP 서버 · 가족·친구에게 확인 요청 (개별 기능)** · 패션 에이전트(시각장애인용 음성 AI 옷 추천)의 한 부분입니다.
 
-AI가 확실하지 않을 때, 사용자가 정해 둔 가족·친구에게 사진을 보내 "이거 입어도 돼?"를 대신 묻고, 받은 답을 음성으로 들려줍니다. 다른 MCP는 AI가 혼자 판단하지만, 이 서버는 사람을 연결합니다.
+담당: (미정)
 
-## 도구 (안)
+## 한눈에
 
-- `add_helper(name, contact)`: 확인을 부탁할 지인 등록
-- `ask_helper(image, question)`: 지인에게 사진과 질문 보내기 (예: "이 셔츠에 이 바지 괜찮아?")
-- `get_answer(request_id)`: 지인의 답 가져오기 → agent가 음성으로 읽어 줌
+- 포트: 8096, 엔드포인트: `http://mcp-helper:8096/mcp` (Streamable HTTP)
+- 기술: Spring Boot, Spring AI MCP Server, 문자(NHN Cloud SMS 또는 솔라피), 답장용 웹 페이지(`/h/<token>`), Cloudflare R2(사진 24시간), FCM, PostgreSQL
+- 상태 확인: `GET /actuator/health`
 
-## 언제 부르나
+## MCP 도구
 
-- clothes_state·face_check 결과의 확신도(confidence)가 낮을 때 agent가 먼저 제안: "확실하지 않아요. 등록한 가족에게 물어볼까요?"
-- 사용자가 직접 "엄마한테 물어봐 줘"라고 할 때
+| 도구 | 하는 일 |
+| --- | --- |
+| `helper_contacts` | 등록한 가족·친구 목록 |
+| `helper_ask` | 사진과 질문을 문자 링크로 보내기 |
+| `helper_answer` | 답이 왔는지 확인 |
 
-## 지금 상태
+입출력 JSON은 [MCP 도구 입출력](https://github.com/fashion-agent-team/fashion-agent/blob/develop/docs/contracts/mcp-tools.md)를 그대로 따릅니다.
 
-없음.
+## 이 레포가 지킬 것
+
+- **개별 기능**입니다. 사용자가 "엄마한테 물어봐 줘"라고 할 때만 씁니다. 옷 추천 중에 자동으로 부르지 않습니다.
+- 사진은 R2에 24시간만 두고 자동 삭제합니다(수명 주기 규칙). 이 서비스가 유일한 사진 보관 예외입니다.
+- 가족은 앱 없이 문자 링크의 웹 페이지에서 "괜찮아 / 얼룩 있어 / 직접 쓰기"로 답합니다. 답이 오면 사용자에게 FCM 알림.
+- 연락처 API(`/api/v1/me/contacts`)도 엽니다(게이트웨이 경유). 응답에 전화번호는 내보내지 않습니다.
+- DB 스키마 `helper`만 씁니다(`contacts`, `requests`).
 
 ## 할 일
 
-- [ ] MCP 서버 만들기 (`tools/list`, `tools/call`)
-- [ ] 보내는 방법 정하기 (카카오톡 알림, 문자, 웹 링크로 사진 보고 버튼으로 답하기 등)
-- [ ] 지인 정보와 요청 기록을 DB에 저장
-- [ ] 답이 늦을 때 안내 문구 ("아직 답이 없어요. 오면 알려 드릴게요")
-- [ ] 사진 보관 기간 정하기 (답을 받으면 지우기 등, 개인정보)
+- [ ] 뼈대 + `/mcp` + Dockerfile
+- [ ] 연락처 API, `helper_contacts`
+- [ ] 문자 발신 번호 등록, `helper_ask`(R2 업로드 + 문자)
+- [ ] 답장 웹 페이지, `helper_answer`, FCM 알림
+
+## 공통 약속
+
+모든 레포가 지키는 약속은 앱 레포에 있습니다. **코드보다 약속 문서를 먼저 고칩니다.**
+
+- [서비스 간 약속](https://github.com/fashion-agent-team/fashion-agent/blob/develop/docs/contracts/README.md): 공통 규칙, 포트, 인증(`X-User-Id`), 오류 모양, DB 스키마, 옷 추천 흐름
+- [MCP 도구 입출력](https://github.com/fashion-agent-team/fashion-agent/blob/develop/docs/contracts/mcp-tools.md)
+- [앱 ↔ 게이트웨이 API (OpenAPI)](https://github.com/fashion-agent-team/fashion-agent/blob/develop/docs/contracts/openapi.yaml)
+- [아키텍처와 기술 스택](https://github.com/fashion-agent-team/fashion-agent/blob/develop/docs/ARCHITECTURE.md)
+
+## 버전
+
+| 항목 | 버전 |
+| --- | --- |
+| Java | 21 |
+| Spring Boot | 4.0.9 |
+| Spring Cloud | 2025.1.4 |
+| Spring AI (BOM) | 2.0.2 |
 
 ## 브랜치
 
@@ -33,4 +59,4 @@ GitFlow를 따릅니다. `develop`에서 `feature/…` 브랜치를 따서 PR로
 
 ## 비밀 값
 
-API 키와 DB 접속 정보는 레포에 넣지 않습니다. 배포 환경의 비밀 값(Secret)으로만 둡니다.
+API 키와 DB 비밀번호는 레포에 넣지 않습니다. 로컬은 `.env`(커밋 금지), 배포는 서버 환경 변수로 둡니다. 목록은 앱 레포 `docs/infra/.env.example`에 있습니다.
