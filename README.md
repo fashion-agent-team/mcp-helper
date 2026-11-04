@@ -2,7 +2,7 @@
 
 **helper MCP 서버 · 가족·친구에게 확인 요청 (개별 기능)** · 패션 에이전트(시각장애인용 음성 AI 옷 추천)의 한 부분입니다.
 
-담당: (미정)
+담당: 박창근
 
 ## 한눈에
 
@@ -30,10 +30,14 @@
 
 ## 할 일
 
-- [ ] 뼈대 + `/mcp` + Dockerfile
-- [ ] 연락처 API, `helper_contacts`
-- [ ] 문자 발신 번호 등록, `helper_ask`(R2 업로드 + 문자)
-- [ ] 답장 웹 페이지, `helper_answer`, FCM 알림
+- [x] 뼈대 + `/mcp` + Dockerfile
+- [x] 연락처 API, `helper_contacts`
+- [x] `helper_ask`(R2 업로드 + 문자: NHN Cloud·솔라피 둘 다, `SMS_PROVIDER`로 고름)
+- [x] 답장 웹 페이지, `helper_answer`, 24시간 만료·사진 삭제
+- [ ] 문자 발신 번호 등록, 실제 계정으로 보내 보기
+- [ ] FCM 알림 (gateway의 푸시 토큰이 필요, [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) "남은 것")
+
+실행·설정·기술 선택 측정은 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)에 있습니다.
 
 ## 공통 약속
 
