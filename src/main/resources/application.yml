@@ -1,0 +1,51 @@
+server:
+  port: 8096
+
+spring:
+  application:
+    name: mcp-helper
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/fashion}
+    username: ${SPRING_DATASOURCE_USERNAME:fashion}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+  flyway:
+    # 공용 DB라서 Flyway 기록 표도 helper 스키마 안에 둔다(다른 서비스와 안 겹치게).
+    schemas: helper
+    default-schema: helper
+  servlet:
+    multipart:
+      enabled: false
+  ai:
+    mcp:
+      server:
+        name: mcp-helper
+        version: 0.1.0
+        type: sync
+        protocol: streamable
+        streamable-http:
+          mcp-endpoint: /mcp
+        instructions: 가족·친구에게 사진과 질문을 문자 링크로 보내고 답을 받아 오는 서버입니다. 사용자가 원할 때만 씁니다.
+
+helper:
+  public-base-url: ${HELPER_PUBLIC_BASE_URL:http://localhost:8096}
+  request-ttl: 24h
+  ask-limit-per-hour: 10
+  max-contacts: 20
+  sms:
+    provider: ${SMS_PROVIDER:}
+    api-key: ${SMS_API_KEY:}
+    api-secret: ${SMS_API_SECRET:}
+    sender: ${SMS_SENDER:}
+    service-id: ${SMS_SERVICE_ID:}
+    timeout: 10s
+  r2:
+    account-id: ${R2_ACCOUNT_ID:}
+    access-key-id: ${R2_ACCESS_KEY_ID:}
+    secret-access-key: ${R2_SECRET_ACCESS_KEY:}
+    bucket: ${R2_BUCKET:fashion-agent-helper}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

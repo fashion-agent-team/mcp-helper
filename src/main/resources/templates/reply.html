@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>옷 확인 부탁 · 패션 에이전트</title>
+  <style>
+    :root { --bg: #f6f5f2; --card: #fff; --ink: #1d1d1f; --muted: #6b6b70; --line: #deddd8; --accent: #1f5eff; --warn: #c2410c; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #151517; --card: #1f1f22; --ink: #f2f2f3; --muted: #a1a1a8; --line: #333338; --accent: #7aa2ff; --warn: #fb923c; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.5 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+    main { max-width: 480px; margin: 0 auto; padding: 20px 16px 40px; }
+    h1 { font-size: 22px; margin: 4px 0 12px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+    .question { font-size: 19px; font-weight: 600; margin: 0 0 12px; white-space: pre-wrap; word-break: keep-all; }
+    img { display: block; width: 100%; height: auto; border-radius: 12px; background: var(--line); }
+    .muted { color: var(--muted); font-size: 15px; }
+    form { margin-top: 16px; display: grid; gap: 10px; }
+    button { font: inherit; font-weight: 600; padding: 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    button.warn { color: var(--warn); }
+    textarea { font: inherit; width: 100%; min-height: 88px; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); }
+    details { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+    summary { font-weight: 600; cursor: pointer; }
+    .error { color: var(--warn); font-weight: 600; }
+  </style>
+</head>
+<body>
+<main>
+  <th:block th:switch="${state}">
+    <th:block th:case="'pending'">
+      <h1>옷 확인 부탁이 왔어요</h1>
+      <div class="card">
+        <p class="question" th:text="${question}">이 옷 오늘 결혼식에 괜찮은지 봐 줄래?</p>
+        <img th:src="@{/h/{t}/photo(t=${token})}" alt="확인을 부탁한 옷 사진">
+        <p class="muted">눈이 불편한 분이 보낸 사진이에요. 보이는 대로 짧게 답해 주시면 음성으로 전해 드려요.</p>
+        <p class="error" th:if="${needAnswer}">답을 하나 골라 주세요.</p>
+        <form method="post" th:action="@{/h/{t}(t=${token})}">
+          <button class="primary" type="submit" name="choice" value="ok">괜찮아</button>
+          <button class="warn" type="submit" name="choice" value="stain">얼룩 있어</button>
+          <details>
+            <summary>직접 쓰기</summary>
+            <p><textarea name="text" maxlength="200" placeholder="예: 셔츠는 좋은데 바지가 너무 밝아. 남색 바지로 바꿔."></textarea></p>
+            <button type="submit" name="choice" value="text">이렇게 보내기</button>
+          </details>
+        </form>
+      </div>
+      <p class="muted">사진은 답을 보내면 바로 지워지고, 답이 없어도 24시간 뒤 지워져요.</p>
+    </th:block>
+    <th:block th:case="'thanks'">
+      <h1>고마워요</h1>
+      <div class="card"><p>답을 전했어요. 사진은 지웠어요.</p></div>
+    </th:block>
+    <th:block th:case="'answered'">
+      <h1>이미 답한 요청이에요</h1>
+      <div class="card"><p>답은 이미 전해졌어요. 사진은 지웠어요.</p></div>
+    </th:block>
+    <th:block th:case="'expired'">
+      <h1>시간이 지났어요</h1>
+      <div class="card"><p>24시간이 지나서 사진을 지웠어요. 답을 받을 수 없어요.</p></div>
+    </th:block>
+    <th:block th:case="*">
+      <h1>없는 링크예요</h1>
+      <div class="card"><p>주소를 다시 확인해 주세요.</p></div>
+    </th:block>
+  </th:block>
+</main>
+</body>
+</html>
