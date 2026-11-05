@@ -36,6 +36,7 @@ helper:
     api-key: ${SMS_API_KEY:}
     api-secret: ${SMS_API_SECRET:}
     sender: ${SMS_SENDER:}
+    service-id: ${SMS_SERVICE_ID:}
     timeout: 10s
   r2:
     account-id: ${R2_ACCOUNT_ID:}

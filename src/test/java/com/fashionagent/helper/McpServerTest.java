@@ -48,7 +48,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 class McpServerTest {
 
     static final byte[] JPEG = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0, 1, 2, 3, 4};
-    static final Pattern LINK = Pattern.compile("https://fa\\.test/h/([A-Za-z0-9_-]{43})");
+    static final Pattern LINK = Pattern.compile("https://fa\\.test/h/([A-Za-z0-9_-]{22})");
 
     @LocalServerPort
     int port;
@@ -151,7 +151,9 @@ class McpServerTest {
         var m = LINK.matcher(textCaptor.getValue());
         assertThat(m.find()).isTrue();
         String token = m.group(1);
-        assertThat(textCaptor.getValue()).contains("이 옷 오늘 결혼식에 괜찮은지 봐 줄래?");
+        // 요금을 아끼려고 링크만 넣은 SMS(90바이트 이하)로 보낸다. 질문은 답장 페이지에 나온다.
+        assertThat(textCaptor.getValue()).isEqualTo("옷 확인 부탁해요 https://fa.test/h/" + token);
+        assertThat(SmsSender.isLong(textCaptor.getValue())).isFalse();
 
         assertThat(text(call("helper_answer", Map.of("userId", user, "requestId", requestId))))
                 .contains("\"status\":\"pending\"", "\"answer\":null");
@@ -262,7 +264,7 @@ class McpServerTest {
     @Test
     @DisplayName("없는 링크는 404 페이지, actuator health는 UP")
     void unknownLinkAndHealth() {
-        var res = http.get().uri("/h/" + "a".repeat(43)).retrieve().toEntity(String.class);
+        var res = http.get().uri("/h/" + "a".repeat(22)).retrieve().toEntity(String.class);
         assertThat(res.getStatusCode().value()).isEqualTo(404);
         assertThat(res.getBody()).contains("없는 링크");
         assertThat(http.get().uri("/actuator/health").retrieve().body(String.class)).contains("UP");

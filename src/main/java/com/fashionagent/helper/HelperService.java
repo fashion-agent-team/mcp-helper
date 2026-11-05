@@ -134,8 +134,17 @@ public class HelperService {
         return new Asked(id, seoul(expiresAt), contact.name());
     }
 
+    /**
+     * 문자 내용. 요금을 아끼려고 SMS(90바이트) 안에 들어가는 것부터 고른다:
+     * 질문까지 넣은 글 → 링크만 넣은 짧은 글(질문은 답장 페이지에 나옴) → 그래도 길면 질문까지 넣은 LMS.
+     */
     String smsText(String question, String token) {
-        return "[패션 에이전트] 옷 확인 부탁이 왔어요.\n\"" + question + "\"\n사진 보고 답해 주세요: " + link(token);
+        String full = "[패션 에이전트] 옷 확인 부탁이 왔어요.\n\"" + question + "\"\n사진 보고 답해 주세요: " + link(token);
+        if (!SmsSender.isLong(full)) {
+            return full;
+        }
+        String shortText = "옷 확인 부탁해요 " + link(token);
+        return SmsSender.isLong(shortText) ? full : shortText;
     }
 
     String link(String token) {
@@ -162,7 +171,7 @@ public class HelperService {
     // ---------- 답장 페이지 (/h/<token>) ----------
 
     public Optional<HelperRequest> byToken(String token) {
-        if (token == null || token.length() != 43) {
+        if (token == null || token.length() != Ids.TOKEN_LENGTH) {
             return Optional.empty();
         }
         return requests.findByToken(token);

@@ -98,4 +98,36 @@ class SmsSendersTest {
                 .andRespond(withBadRequest().body("{\"errorCode\":\"ValidationError\"}").contentType(MediaType.APPLICATION_JSON));
         assertThatThrownBy(() -> sender.send("01012345678", "hi")).isInstanceOf(SmsSender.SmsException.class);
     }
+
+    @Test
+    @DisplayName("SENS: 서명 헤더와 SMS·LMS 구분")
+    void sens() {
+        var builder = RestClient.builder();
+        var server = MockRestServiceServer.bindTo(builder).build();
+        var clock = Clock.fixed(Instant.ofEpochMilli(1793768400000L), ZoneOffset.UTC);
+        var sender = new SensSmsSender(builder, "https://sens.test", "AK", "SK", "ncp:sms:kr:1:fa", "0212345678", clock);
+        String sig = SensSmsSender.sign("SK", "POST /sms/v2/services/ncp:sms:kr:1:fa/messages\n1793768400000\nAK");
+        server.expect(requestTo("https://sens.test/sms/v2/services/ncp:sms:kr:1:fa/messages"))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(header("x-ncp-apigw-timestamp", "1793768400000"))
+                .andExpect(header("x-ncp-iam-access-key", "AK"))
+                .andExpect(header("x-ncp-apigw-signature-v2", sig))
+                .andExpect(jsonPath("$.type").value("SMS"))
+                .andExpect(jsonPath("$.from").value("0212345678"))
+                .andExpect(jsonPath("$.messages[0].to").value("01012345678"))
+                .andRespond(withSuccess("{\"statusCode\":\"202\",\"statusName\":\"success\"}", MediaType.APPLICATION_JSON));
+        server.expect(requestTo("https://sens.test/sms/v2/services/ncp:sms:kr:1:fa/messages"))
+                .andExpect(jsonPath("$.type").value("LMS"))
+                .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
+        sender.send("01012345678", "짧은 문자");
+        sender.send("01012345678", "가".repeat(46));
+        server.verify();
+    }
+
+    @Test
+    @DisplayName("SENS: 서명은 HMAC-SHA256의 base64")
+    void sensSignature() {
+        // printf 'POST /sms/v2/services/x/messages\n1\nAK' | openssl dgst -sha256 -hmac SK -binary | base64
+        assertThat(SensSmsSender.sign("SK", "POST /sms/v2/services/x/messages\n1\nAK")).isEqualTo("pApB7O4ETMkMbiFOTJUvXLgfQ5nFn9/4iWwwVIjh6/Y=");
+    }
 }

@@ -54,7 +54,7 @@ agent ─helper_answer─▶ pending | answered(answer, answeredBy) | expired
 | `ReplyPageController` + `templates/reply.html` | 가족 답장 페이지 `/h/<token>`, 사진 `/h/<token>/photo` |
 | `HelperService` | 검증(사진 JPEG·6MB, 질문 200자, 한 시간 10번), 보내기, 답 저장, 만료 |
 | `ContactRepository`, `RequestRepository` | `helper` 스키마 SQL (JdbcClient). 상태 바꾸기는 `WHERE status = 'pending'`으로 한 번만 |
-| `sms/` | `SMS_PROVIDER`: `nhncloud`, `solapi`, 비우면 로그만 |
+| `sms/` | `SMS_PROVIDER`: `sens`(우리가 쓰는 것), `nhncloud`, `solapi`, 비우면 로그만 |
 | `photo/` | R2(AWS SDK S3), 값이 없으면 메모리 |
 | `notify/` | 답 알림. 지금은 로그만(아래 "남은 것") |
 | `db/migration/V1__init.sql` | 앱 레포 `docs/infra/schema.sql`의 helper 부분 그대로 |
@@ -65,8 +65,9 @@ agent ─helper_answer─▶ pending | answered(answer, answeredBy) | expired
 | --- | --- | --- |
 | `SPRING_DATASOURCE_URL` / `_USERNAME` / `_PASSWORD` | localhost:5432/fashion, fashion | 공용 DB |
 | `HELPER_PUBLIC_BASE_URL` | http://localhost:8096 | 문자 링크의 도메인 |
-| `SMS_PROVIDER` | (비움 = 로그만) | `nhncloud` 또는 `solapi` |
-| `SMS_API_KEY`, `SMS_API_SECRET` | | NHN Cloud는 앱키·시크릿 키, 솔라피는 API 키·시크릿 |
+| `SMS_PROVIDER` | (비움 = 로그만) | `sens`, `nhncloud`, `solapi` |
+| `SMS_API_KEY`, `SMS_API_SECRET` | | SENS는 Access Key·Secret Key, NHN Cloud는 앱키·시크릿 키, 솔라피는 API 키·시크릿 |
+| `SMS_SERVICE_ID` | | SENS만: SMS 프로젝트의 서비스 ID (`ncp:sms:kr:…`) |
 | `SMS_SENDER` | | 사전 등록한 발신 번호 |
 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | 버킷 `fashion-agent-helper` | 비우면 메모리(개발용) |
 
@@ -86,20 +87,21 @@ R2 버킷은 비공개로 두고, 대시보드 Settings → Object lifecycle rul
 
 - DB 접근은 **JdbcClient**: 표가 2개뿐이고 SQL이 이미 `schema.sql`에 있어서, JPA(Hibernate)를 넣으면 jar +32MB, 시작 +3.5초, 메모리 +100MB 이상인데 얻는 게 적습니다. "답은 한 번만" 같은 조건부 UPDATE도 SQL로 바로 씁니다.
 - R2 클라이언트는 **AWS SDK v2 (JDK HTTP 클라이언트)**: MinIO 클라이언트는 jar +12MB에 사진 올리기가 2배 느렸습니다. Cloudflare 문서도 AWS SDK를 예로 듭니다.
-- 문자 업체는 둘 다 만들어 두고 `SMS_PROVIDER`로 바꿉니다. 요금 기준으로는 **NHN Cloud**를 먼저 씁니다(아래 표).
+- 문자 업체는 세 곳 다 만들어 두고 `SMS_PROVIDER`로 바꿉니다. **네이버 클라우드 SENS**를 씁니다(2026-11-05 정함, 무료 제공량 안에서 발표 준비가 됨).
 
 ### 문자 업체 (2026-11-05 확인)
 
-| | NHN Cloud | 솔라피 |
-| --- | --- | --- |
-| SMS(90바이트까지) | 9.9원 | 18원 (VAT 별도) |
-| LMS | 30원 | 45원 (VAT 별도) |
-| 가입 | 개인 가능, 신용카드 등록 필요 | 개인 가능 |
-| 발신 번호 | 콘솔에서 휴대폰 본인 인증으로 등록 | 콘솔에서 등록 |
+| | 네이버 클라우드 SENS (고름) | NHN Cloud | 솔라피 |
+| --- | --- | --- | --- |
+| SMS(90바이트까지) | 50건까지 무료, 넘으면 유료 (VAT 별도) | 9.9원 | 18원 (VAT 별도) |
+| LMS | 10건까지 무료 | 30원 | 45원 (VAT 별도) |
+| 가입 | 결제 수단 등록 필요 | 개인 가능, 신용카드 등록 필요 | 개인 가능 |
+| 발신 번호 | 콘솔에서 등록 | 콘솔에서 휴대폰 본인 인증으로 등록 | 콘솔에서 등록 |
 
-- 우리 문자는 링크(약 70자)와 질문이 들어가서 거의 항상 LMS입니다. 한 번 물을 때 NHN Cloud는 30원, 솔라피는 45원이고, 발표 준비로 수십 번 보내도 몇천 원 안쪽입니다.
+- 문자는 SMS(90바이트) 한 통에 들어가게 `옷 확인 부탁해요 https://<도메인>/h/<22자 토큰>`만 보냅니다. 질문은 답장 페이지에서 보여 줍니다. 도메인이 너무 길어 90바이트를 넘으면 질문까지 넣어 LMS로 보냅니다.
+- SENS 무료 제공량이 월 기준인지는 요금 페이지에 적혀 있지 않습니다. 가입할 때 콘솔에서 확인하세요.
 - 발신 번호는 내 휴대폰 번호가 받는 사람에게 보이므로, 팀 공용 번호나 투넘버 서비스를 쓰는 걸 권합니다.
-- 출처: [솔라피 가격 정책](https://solapi.com/pricing), [국내 메시지 발송 서비스 비교 (notifly, 2026-08)](https://blog.notifly.tech/messaging-vendor-comparison/), [NHN Cloud 가입·발신 번호 등록 후기 (2022)](https://velog.io/@yukina1418/%ED%95%B8%EB%93%9C%ED%8F%B0-%EB%B3%B8%EC%9D%B8%EC%9D%B8%EC%A6%9D-NHN-Cloud%EB%A1%9C-%EB%A7%8C%EB%93%A4%EC%96%B4%EB%B3%B4%EA%B8%B0). NHN Cloud 공식 요금 페이지는 이 환경에서 열리지 않아 비교 글의 숫자를 썼습니다. 가입할 때 콘솔에서 다시 확인하세요.
+- 출처: [네이버 클라우드 SENS 요금](https://m.ncloud.com/product/applicationService/sens), [솔라피 가격 정책](https://solapi.com/pricing), [국내 메시지 발송 서비스 비교 (notifly, 2026-08)](https://blog.notifly.tech/messaging-vendor-comparison/), [NHN Cloud 가입·발신 번호 등록 후기 (2022)](https://velog.io/@yukina1418/%ED%95%B8%EB%93%9C%ED%8F%B0-%EB%B3%B8%EC%9D%B8%EC%9D%B8%EC%A6%9D-NHN-Cloud%EB%A1%9C-%EB%A7%8C%EB%93%A4%EC%96%B4%EB%B3%B4%EA%B8%B0). NHN Cloud 공식 요금 페이지는 이 환경에서 열리지 않아 비교 글의 숫자를 썼습니다. 가입할 때 콘솔에서 다시 확인하세요.
 
 ## 남은 것
 

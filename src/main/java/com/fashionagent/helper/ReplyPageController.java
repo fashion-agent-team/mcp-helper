@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 /**
- * 가족·친구가 문자 링크로 여는 답장 페이지. 로그인 없이 링크의 토큰(256비트)으로만 연다.
+ * 가족·친구가 문자 링크로 여는 답장 페이지. 로그인 없이 링크의 토큰(128비트)으로만 연다.
  * 게이트웨이가 /h/** 를 그대로 넘겨 준다(약속 문서 2절).
  */
 @Controller

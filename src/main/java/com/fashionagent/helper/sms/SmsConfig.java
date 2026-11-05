@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
-/** SMS_PROVIDER로 문자 업체를 고른다: nhncloud | solapi | 비우면 log(개발용, 보내지 않음). */
+/** SMS_PROVIDER로 문자 업체를 고른다: sens | nhncloud | solapi | 비우면 log(개발용, 보내지 않음). */
 @Configuration
 public class SmsConfig {
 
@@ -24,6 +24,7 @@ public class SmsConfig {
             @Value("${helper.sms.api-key:}") String apiKey,
             @Value("${helper.sms.api-secret:}") String apiSecret,
             @Value("${helper.sms.sender:}") String sender,
+            @Value("${helper.sms.service-id:}") String serviceId,
             @Value("${helper.sms.base-url:}") String baseUrl,
             @Value("${helper.sms.timeout:10s}") Duration timeout) {
         String p = provider.trim().toLowerCase();
@@ -39,10 +40,14 @@ public class SmsConfig {
         requestFactory.setReadTimeout(timeout);
         var http = builder.clone().requestFactory(requestFactory);
         String senderDigits = sender.replaceAll("\\D", "");
+        if (p.equals("sens") && serviceId.isBlank()) {
+            throw new IllegalStateException("SMS_PROVIDER=sens이면 SMS_SERVICE_ID(SENS 서비스 ID)도 필요해요.");
+        }
         return switch (p) {
+            case "sens" -> new SensSmsSender(http, or(baseUrl, "https://sens.apigw.ntruss.com"), apiKey, apiSecret, serviceId.trim(), senderDigits, clock);
             case "nhncloud" -> new NhnCloudSmsSender(http, or(baseUrl, "https://api-sms.cloud.toast.com"), apiKey, apiSecret, senderDigits);
             case "solapi" -> new SolapiSmsSender(http, or(baseUrl, "https://api.solapi.com"), apiKey, apiSecret, senderDigits, clock);
-            default -> throw new IllegalStateException("SMS_PROVIDER는 nhncloud, solapi 중 하나여야 해요: " + p);
+            default -> throw new IllegalStateException("SMS_PROVIDER는 sens, nhncloud, solapi 중 하나여야 해요: " + p);
         };
     }
 
