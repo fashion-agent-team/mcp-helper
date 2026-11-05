@@ -7,7 +7,7 @@
 ## 한눈에
 
 - 포트: 8096, 엔드포인트: `http://mcp-helper:8096/mcp` (Streamable HTTP)
-- 기술: Spring Boot, Spring AI MCP Server, 문자(네이버 클라우드 SENS, NHN Cloud·솔라피로도 바꿀 수 있음), 답장용 웹 페이지(`/h/<token>`), Cloudflare R2(사진 24시간), FCM, PostgreSQL
+- 기술: Spring Boot, Spring AI MCP Server, 문자(솔라피, SENS·NHN Cloud로도 바꿀 수 있음), 답장용 웹 페이지(`/h/<token>`), Cloudflare R2(사진 24시간), FCM, PostgreSQL
 - 상태 확인: `GET /actuator/health`
 
 ## MCP 도구
@@ -32,9 +32,9 @@
 
 - [x] 뼈대 + `/mcp` + Dockerfile
 - [x] 연락처 API, `helper_contacts`
-- [x] `helper_ask`(R2 업로드 + 문자: SENS·NHN Cloud·솔라피, `SMS_PROVIDER`로 고름)
+- [x] `helper_ask`(R2 업로드 + 문자: 솔라피·SENS·NHN Cloud, `SMS_PROVIDER`로 고름)
 - [x] 답장 웹 페이지, `helper_answer`, 24시간 만료·사진 삭제
-- [ ] SENS 가입·발신 번호 등록, 실제로 보내 보기
+- [x] 솔라피 가입·발신 번호 등록, 시험 문자 보내기 (2026-11-05)
 - [ ] FCM 알림 (gateway의 푸시 토큰이 필요, [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) "남은 것")
 
 실행·설정·기술 선택 측정은 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)에 있습니다.

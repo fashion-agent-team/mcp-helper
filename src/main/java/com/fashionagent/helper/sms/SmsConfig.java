@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
-/** SMS_PROVIDER로 문자 업체를 고른다: sens | nhncloud | solapi | 비우면 log(개발용, 보내지 않음). */
+/** SMS_PROVIDER로 문자 업체를 고른다: solapi(우리가 씀) | sens | nhncloud | 비우면 log(개발용, 보내지 않음). */
 @Configuration
 public class SmsConfig {
 
