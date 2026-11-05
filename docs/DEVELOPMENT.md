@@ -86,7 +86,20 @@ R2 버킷은 비공개로 두고, 대시보드 Settings → Object lifecycle rul
 
 - DB 접근은 **JdbcClient**: 표가 2개뿐이고 SQL이 이미 `schema.sql`에 있어서, JPA(Hibernate)를 넣으면 jar +32MB, 시작 +3.5초, 메모리 +100MB 이상인데 얻는 게 적습니다. "답은 한 번만" 같은 조건부 UPDATE도 SQL로 바로 씁니다.
 - R2 클라이언트는 **AWS SDK v2 (JDK HTTP 클라이언트)**: MinIO 클라이언트는 jar +12MB에 사진 올리기가 2배 느렸습니다. Cloudflare 문서도 AWS SDK를 예로 듭니다.
-- 문자 업체는 둘 다 만들어 두고 `SMS_PROVIDER`로 바꿉니다. 실제 발송 비교는 가입·발신 번호 등록 뒤에 합니다.
+- 문자 업체는 둘 다 만들어 두고 `SMS_PROVIDER`로 바꿉니다. 요금 기준으로는 **NHN Cloud**를 먼저 씁니다(아래 표).
+
+### 문자 업체 (2026-11-05 확인)
+
+| | NHN Cloud | 솔라피 |
+| --- | --- | --- |
+| SMS(90바이트까지) | 9.9원 | 18원 (VAT 별도) |
+| LMS | 30원 | 45원 (VAT 별도) |
+| 가입 | 개인 가능, 신용카드 등록 필요 | 개인 가능 |
+| 발신 번호 | 콘솔에서 휴대폰 본인 인증으로 등록 | 콘솔에서 등록 |
+
+- 우리 문자는 링크(약 70자)와 질문이 들어가서 거의 항상 LMS입니다. 한 번 물을 때 NHN Cloud는 30원, 솔라피는 45원이고, 발표 준비로 수십 번 보내도 몇천 원 안쪽입니다.
+- 발신 번호는 내 휴대폰 번호가 받는 사람에게 보이므로, 팀 공용 번호나 투넘버 서비스를 쓰는 걸 권합니다.
+- 출처: [솔라피 가격 정책](https://solapi.com/pricing), [국내 메시지 발송 서비스 비교 (notifly, 2026-08)](https://blog.notifly.tech/messaging-vendor-comparison/), [NHN Cloud 가입·발신 번호 등록 후기 (2022)](https://velog.io/@yukina1418/%ED%95%B8%EB%93%9C%ED%8F%B0-%EB%B3%B8%EC%9D%B8%EC%9D%B8%EC%A6%9D-NHN-Cloud%EB%A1%9C-%EB%A7%8C%EB%93%A4%EC%96%B4%EB%B3%B4%EA%B8%B0). NHN Cloud 공식 요금 페이지는 이 환경에서 열리지 않아 비교 글의 숫자를 썼습니다. 가입할 때 콘솔에서 다시 확인하세요.
 
 ## 남은 것
 
